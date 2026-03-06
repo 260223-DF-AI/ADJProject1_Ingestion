@@ -110,7 +110,7 @@ class TextAnalyzer:
         top_trigrams = self.get_trigrams()
         readability = calculate_readability(self)
 
-        return AnalysisResult(document_stats,top_words,top_bigrams, top_trigrams, readability)
+        return AnalysisResult(document_stats, top_words, top_bigrams, top_trigrams, readability)
 
 
 
