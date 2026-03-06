@@ -12,10 +12,25 @@ def read_file_subset(filepath, subset=[]):
             - subset : LIST of column names that you want to keep (default is all)
         Output:
             - Dataframe with your csv read, data is NOT cleaned
+
+            TODO : change all them prints to logs when we get that set up
     """
 
     # read the file
-    df = pd.read_csv(filepath)
+    try:
+        df = pd.read_csv(filepath)
+    except pd.errors.EmptyDataError:
+        print("File is empty.")
+        return None
+    except pd.errors.ParserError as e:
+        print("Error parsing the CSV file.")
+        raise RuntimeError("Something went wrong with the parsing, try again e:",e)
+    except FileNotFoundError as e:
+        print("File not found.")
+        raise FileNotFoundError("Filepath wrong e:",e)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        exit(-1) # quit now, we need to fix this
 
     # extract subset of data we want to work with if any
     if not subset:
