@@ -54,3 +54,8 @@ def clean_data(df):
     df["monthly_store_visits"] = df["monthly_store_visits"].astype(int)
     df["avg_online_spend"] = df["avg_online_spend"].astype(float)
     df["shopping_preference"] = df["shopping_preference"].astype(str)
+    
+    # string standardizing
+    df["shopping_preference"] = df["shopping_preference"].applymap(lambda x : x.strip().lower())
+
+    return df
