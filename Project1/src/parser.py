@@ -55,7 +55,8 @@ def clean_data(df):
 
     # TODO decide whether to drop anything here
 
-
+    df.dropna(inplace=True) # drop rows with any NaN values
+    df.drop_duplicates(inplace=True) # drop duplicate rows
 
     # type conversions
     df["age"] = df["age"].astype(int)
@@ -71,6 +72,6 @@ def clean_data(df):
     df["shopping_preference"] = df["shopping_preference"].astype(str)
     
     # string standardizing
-    df["shopping_preference"] = df["shopping_preference"].applymap(lambda x : x.strip().lower())
+    df["shopping_preference"] = df["shopping_preference"].apply(lambda x : x.strip().lower())
 
     return df
