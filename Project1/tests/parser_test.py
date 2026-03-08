@@ -1,15 +1,64 @@
 """File to test parser.py functionality"""
 import pytest
-from src.parser import clean_data
+from src.parser import clean_data, read_file_subset
 import pandas as pd
 
-def test_parser(): # TODO implement this + whatever you think might be useful to test on parser
-    """Test parser.py functionality"""
-    assert False, "not implemented"
+class TestParserFunctionality:
+    """Test all of the parser's edgecases"""
 
+    def test_file_not_found(self): # TODO implement this + whatever you think might be useful to test on parser
+        """Test file not found when parsing"""
+        with pytest.raises(FileNotFoundError):
+            read_file_subset("NotAValidFile", [])
+
+    def test_empty_file(self, tmp_path):    # tmp_path is a built in pytest feature that creates a temporary file on disk that gets cleaned up automatically after test is run
+        """Test file is empty"""
+        empty_file = tmp_path / "empty_file.csv"
+        empty_file.write_text("")
+        with pytest.raises(pd.errors.EmptyDataError):
+            read_file_subset(str(empty_file), [])
+
+    def test_parsing_error(self, tmp_path):
+        """Test that a malformed/corrupt file raises a ParserError"""
+        bad_file = tmp_path / "malformed.csv"
+        bad_file.write_text("col1,col2\n1,2,3\n4,5,6,7")  # inconsistent columns
+        with pytest.raises(pd.errors.ParserError):
+            read_file_subset(str(bad_file), [])
+
+    def test_reading_file(self):
+        """Test reading in a file with a given subset"""
+        # ARRANGE
+        # expected output when reading the data:
+        # 11 columns with 7 rows
+        # 2 rows have only 6 non NULL values
+        expected_output = pd.DataFrame({
+        'age': [56, 69, 46, 32, 60, 60, 60],
+        'monthly_income': [221111.0, 96029.0, 19055.0, 53170.0, 244016.0, 244016.0, 244016.0],
+        'daily_internet_hours': [6.5, 8.2, 6.4, 6.4, 6.0, 6.0, 6.0],
+        'smartphone_usage_years': [12.0, 13.0, 4.0, 11.0, 5.0, 5.0, 5.0],
+        'social_media_hours': [0.7, 2.7, 2.1, 0.7, 0.7, 0.7, 0.7],
+        'online_payment_trust_score': [1.0, 6.0, 10.0, 2.0, 2.0, 2.0, 2.0],
+        'tech_savvy_score': [6.0, 9.0, 8.0, 10.0, 5.0, 5.0, None],
+        'monthly_online_orders': [16, 14, 2, 20, 18, 18, 18],
+        'monthly_store_visits': [16, 1, 0, 3, 16, 16, 16],
+        'avg_online_spend': [28551.0, 124056.0, 81939.0, 35901.0, 131971.0, 131971.0, None],
+        'shopping_preference': ['Store', 'Hybrid', 'Store', 'Store', 'Store', 'Store', 'Store']
+        })
+        # ACT
+        # get data frame from reading in the file
+        subset = [
+            'age', 'monthly_income', 'daily_internet_hours', 'smartphone_usage_years', 'social_media_hours', 'online_payment_trust_score',
+            'tech_savvy_score', 'monthly_online_orders', 'monthly_store_visits', 'avg_online_spend', 'shopping_preference'
+        ]
+        df = read_file_subset('tests/test_subset.csv', subset)
+        test = df.compare(expected_output)
+        # assert 
+        assert test.empty, f"Cleaned data does not match expected output diff:{df.compare(test)}"
+        
 
 
 def test_clean_data():
+
     """Test clean_data function in parser.py"""
     
     # get sample data from test_subset.csv

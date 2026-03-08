@@ -21,13 +21,13 @@ def read_file_subset(filepath, subset=[]):
         df = pd.read_csv(filepath)
     except pd.errors.EmptyDataError:
         print("File is empty.")
-        return None
+        raise pd.errors.EmptyDataError("Empty file")
     except pd.errors.ParserError as e:
         print("Error parsing the CSV file.")
-        raise RuntimeError("Something went wrong with the parsing, try again e:",e)
+        raise pd.errors.ParserError("Something went wrong with the parsing, try again e:", e)
     except FileNotFoundError as e:
         print("File not found.")
-        raise FileNotFoundError("Filepath wrong e:",e)
+        raise FileNotFoundError("Filepath wrong e:", e)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         exit(-1) # quit now, we need to fix this
