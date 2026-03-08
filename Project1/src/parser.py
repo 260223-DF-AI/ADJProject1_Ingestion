@@ -2,6 +2,19 @@
 
 import pandas as pd
 
+import logging
+import datetime
+
+logger = logging.getLogger(__name__)
+console_handler = logging.StreamHandler()
+file_handler = logging.FileHandler('message.log')
+fomatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+
+console_handler.setFormatter(fomatter)
+file_handler.setFormatter(fomatter)
+
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
 
 
 def read_file_subset(filepath, subset=[]):
@@ -19,17 +32,17 @@ def read_file_subset(filepath, subset=[]):
     # read the file
     try:
         df = pd.read_csv(filepath)
-    except pd.errors.EmptyDataError:
-        print("File is empty.")
-        raise pd.errors.EmptyDataError("Empty file")
+    except pd.errors.EmptyDataError as e:
+        logger.warning(f"{datetime.now()}\nFile is empty\nError message: {e}\n\n")
+        return None
     except pd.errors.ParserError as e:
-        print("Error parsing the CSV file.")
-        raise pd.errors.ParserError("Something went wrong with the parsing, try again e:", e)
+        logger.warning(f"{datetime.now()}\nError parsing the CSV file.\nError message: {e}\n\n")
+        raise RuntimeError("Something went wrong with the parsing, try again e:",e)
     except FileNotFoundError as e:
-        print("File not found.")
-        raise FileNotFoundError("Filepath wrong e:", e)
+        logger.warning(f"{datetime.now()}\nFile not found.\nError message: {e}\n\n")
+        raise FileNotFoundError("Filepath wrong e:",e)
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        logger.warning(f"{datetime.now()}\nAn unexpected error occurred.\nError message: {e}\n\n")
         exit(-1) # quit now, we need to fix this
 
     # extract subset of data we want to work with if any
@@ -37,7 +50,7 @@ def read_file_subset(filepath, subset=[]):
         return df
     else:
         return df[subset]
-    
+
 
 def clean_data(df):
     """Cleans the given Dataframe
