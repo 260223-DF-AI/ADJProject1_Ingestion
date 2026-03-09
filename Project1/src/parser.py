@@ -88,3 +88,11 @@ def clean_data(df):
     df["shopping_preference"] = df["shopping_preference"].apply(lambda x : x.strip().lower())
 
     return df
+
+def add_id_feature(df):
+    "Adds a unique id to each row"
+    #print(df.shape)
+    arr = list(range(df.shape[0]))
+    #print(arr)
+    df["id"] = arr
+    return df

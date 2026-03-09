@@ -1,6 +1,6 @@
 """File to test parser.py functionality"""
 import pytest
-from src.parser import clean_data, read_file_subset
+from src.parser import clean_data, read_file_subset, add_id_feature
 import pandas as pd
 
 class TestParserFunctionality:
@@ -101,8 +101,8 @@ def test_clean_data():
     
     # get sample data from test_subset.csv
     sample_data = pd.read_csv('tests/test_subset.csv')
-    print("Sample data before cleaning:")
-    print(sample_data)
+    #print("Sample data before cleaning:")
+    #print(sample_data)
     # expected output after cleaning the data
     # expected behavior changes:
     #   - rows 6 and 7 are duplicates, so drop them
@@ -126,11 +126,59 @@ def test_clean_data():
         'shopping_preference': ['store', 'hybrid', 'store', 'store', 'store']
     })
 
-    print(expected_output)
+    #print(expected_output)
     # clean the data using the function
     cleaned_data = clean_data(sample_data)
-    print("Cleaned data:")
-    print(cleaned_data)
+    #print("Cleaned data:")
+    #print(cleaned_data)
     # assert that the cleaned data matches the expected output
     test = cleaned_data.compare(expected_output)
     assert test.empty, f"Cleaned data does not match expected output diff:{cleaned_data.compare(test)}"
+
+
+def test_add_id():
+    """tests adding id feature"""
+
+    sample_data = pd.read_csv('tests/test_subset.csv')
+    #print("Sample data before cleaning:")
+
+    expected_output1 = pd.DataFrame({
+        'age': [56, 69, 46, 32, 60],
+        'monthly_income': [221111.0, 96029.0, 19055.0, 53170.0, 244016.0],
+        'daily_internet_hours': [6.5, 8.2, 6.4, 6.4, 6.0],
+        'smartphone_usage_years': [12.0, 13.0, 4.0, 11.0, 5.0],
+        'social_media_hours': [0.7, 2.7, 2.1, 0.7, 0.7],
+        'online_payment_trust_score': [1.0, 6.0, 10.0, 2.0, 2.0],
+        'tech_savvy_score': [6.0, 9.0, 8.0, 10.0, 5.0],
+        'monthly_online_orders': [16, 14, 2, 20, 18],
+        'monthly_store_visits': [16, 1, 0, 3, 16],
+        'avg_online_spend': [28551.0, 124056.0, 81939.0, 35901.0, 131971.0],
+        'shopping_preference': ['store', 'hybrid', 'store', 'store', 'store']
+    })
+
+    cleaned_data = clean_data(sample_data)
+
+    # test cleaned_data works
+    test = cleaned_data.compare(expected_output1)
+    assert test.empty, f"Cleaned data does not match expected output diff:{cleaned_data.compare(test)}"
+
+    # test adding id works
+    expected_output2 = pd.DataFrame({
+        'age': [56, 69, 46, 32, 60],
+        'monthly_income': [221111.0, 96029.0, 19055.0, 53170.0, 244016.0],
+        'daily_internet_hours': [6.5, 8.2, 6.4, 6.4, 6.0],
+        'smartphone_usage_years': [12.0, 13.0, 4.0, 11.0, 5.0],
+        'social_media_hours': [0.7, 2.7, 2.1, 0.7, 0.7],
+        'online_payment_trust_score': [1.0, 6.0, 10.0, 2.0, 2.0],
+        'tech_savvy_score': [6.0, 9.0, 8.0, 10.0, 5.0],
+        'monthly_online_orders': [16, 14, 2, 20, 18],
+        'monthly_store_visits': [16, 1, 0, 3, 16],
+        'avg_online_spend': [28551.0, 124056.0, 81939.0, 35901.0, 131971.0],
+        'shopping_preference': ['store', 'hybrid', 'store', 'store', 'store'],
+        'id' : [0,1,2,3,4]
+    })
+
+    result = add_id_feature(cleaned_data)
+    #print(result)
+    test2 = expected_output2.compare(result)
+    assert test2.empty, f"new data does not match expected output diff:{cleaned_data.compare(test)}"
