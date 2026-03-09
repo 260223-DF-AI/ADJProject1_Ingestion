@@ -68,7 +68,12 @@ def clean_data(df):
 
     # TODO decide whether to drop anything here
 
+    na_rows = df[df.isnull().any(axis=1)]
+    logger.info(f"na rows: {na_rows}")
     df.dropna(inplace=True) # drop rows with any NaN values
+
+    dupe_rows = df[df.duplicated(keep=False)]
+    logger.info(f"dupe rows: {dupe_rows}")
     df.drop_duplicates(inplace=True) # drop duplicate rows
 
     # type conversions

@@ -20,5 +20,5 @@
     - function to upload csv data to database table (parameterized queries)
 - Testing (test driven design, logging/reporting)
     - Configure logger
-    - Unit testing for each function
+    - Unit testinow g for each function
     - Testing by dataset sample
