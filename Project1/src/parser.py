@@ -10,6 +10,8 @@ console_handler = logging.StreamHandler()
 file_handler = logging.FileHandler('message.log')
 fomatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
 
+logger.setLevel(logging.INFO)
+
 console_handler.setFormatter(fomatter)
 file_handler.setFormatter(fomatter)
 
