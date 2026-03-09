@@ -32,17 +32,18 @@ def read_file_subset(filepath, subset=[]):
     # read the file
     try:
         df = pd.read_csv(filepath)
+        logger.info(f"Read csv file {filepath} into pandas dataframe\n")
     except pd.errors.EmptyDataError as e:
-        logger.warning(f"{datetime.now()}\nFile is empty\nError message: {e}\n\n")
+        logger.warning(f"File is empty. Error message: {e}")
         return None
     except pd.errors.ParserError as e:
-        logger.warning(f"{datetime.now()}\nError parsing the CSV file.\nError message: {e}\n\n")
+        logger.warning(f"Error parsing the CSV file. Error message: {e}")
         raise RuntimeError("Something went wrong with the parsing, try again e:",e)
     except FileNotFoundError as e:
-        logger.warning(f"{datetime.now()}\nFile not found.\nError message: {e}\n\n")
+        logger.warning(f"File not found. Error message: {e}")
         raise FileNotFoundError("Filepath wrong e:",e)
     except Exception as e:
-        logger.warning(f"{datetime.now()}\nAn unexpected error occurred.\nError message: {e}\n\n")
+        logger.error(f"An unexpected error occurred. Error message: {e}")
         exit(-1) # quit now, we need to fix this
 
     # extract subset of data we want to work with if any
@@ -88,3 +89,7 @@ def clean_data(df):
     df["shopping_preference"] = df["shopping_preference"].apply(lambda x : x.strip().lower())
 
     return df
+
+
+jaisalpath = "/Users/mehta/Desktop/Revature/RevatureGitHubFiles/ADJProject1_Ingestion/Project1/shopping_dataset.csv"
+read_file_subset(jaisalpath)
