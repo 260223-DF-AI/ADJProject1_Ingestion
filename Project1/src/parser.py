@@ -10,6 +10,8 @@ console_handler = logging.StreamHandler()
 file_handler = logging.FileHandler('message.log')
 fomatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
 
+logger.setLevel(logging.INFO)
+
 console_handler.setFormatter(fomatter)
 file_handler.setFormatter(fomatter)
 
@@ -69,7 +71,12 @@ def clean_data(df):
 
     # TODO decide whether to drop anything here
 
+    na_rows = df[df.isnull().any(axis=1)]
+    logger.info(f"na rows: {na_rows}")
     df.dropna(inplace=True) # drop rows with any NaN values
+
+    dupe_rows = df[df.duplicated(keep=False)]
+    logger.info(f"dupe rows: {dupe_rows}")
     df.drop_duplicates(inplace=True) # drop duplicate rows
 
     # type conversions
@@ -89,7 +96,3 @@ def clean_data(df):
     df["shopping_preference"] = df["shopping_preference"].apply(lambda x : x.strip().lower())
 
     return df
-
-
-jaisalpath = "/Users/mehta/Desktop/Revature/RevatureGitHubFiles/ADJProject1_Ingestion/Project1/shopping_dataset.csv"
-read_file_subset(jaisalpath)
