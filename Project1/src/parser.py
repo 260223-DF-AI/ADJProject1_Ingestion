@@ -34,7 +34,7 @@ def read_file_subset(filepath, subset=[]):
     # read the file
     try:
         df = pd.read_csv(filepath)
-        logger.info(f"Read csv file {filepath} into pandas dataframe\n")
+        logger.info(f"Read csv file {filepath} into pandas dataframe")
     except pd.errors.EmptyDataError as e:
         logger.warning(f"File is empty. Error message: {e}")
         return None
@@ -95,4 +95,15 @@ def clean_data(df):
     # string standardizing
     df["shopping_preference"] = df["shopping_preference"].apply(lambda x : x.strip().lower())
 
+    return df
+
+
+
+def add_id_feature(df):
+    "Adds a unique id to each row"
+    #print(df.shape)
+    arr = list(range(df.shape[0]))
+    #print(arr)
+    df["id"] = arr
+    
     return df
