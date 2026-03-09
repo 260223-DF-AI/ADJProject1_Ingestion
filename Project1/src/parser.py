@@ -3,7 +3,7 @@
 import pandas as pd
 
 import logging
-import datetime
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 console_handler = logging.StreamHandler()

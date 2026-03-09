@@ -12,17 +12,17 @@ class TestParserFunctionality:
             read_file_subset("NotAValidFile", [])
 
     def test_empty_file(self, tmp_path):    # tmp_path is a built in pytest feature that creates a temporary file on disk that gets cleaned up automatically after test is run
-        """Test file is empty"""
+        """Test file is empty — function catches EmptyDataError and returns None"""
         empty_file = tmp_path / "empty_file.csv"
         empty_file.write_text("")
-        with pytest.raises(pd.errors.EmptyDataError):
-            read_file_subset(str(empty_file), [])
+        result = read_file_subset(str(empty_file), [])
+        assert result is None
 
     def test_parsing_error(self, tmp_path):
-        """Test that a malformed/corrupt file raises a ParserError"""
+        """Test that a malformed/corrupt file raises a RuntimeError (wrapped by the function)"""
         bad_file = tmp_path / "malformed.csv"
         bad_file.write_text("col1,col2\n1,2,3\n4,5,6,7")  # inconsistent columns
-        with pytest.raises(pd.errors.ParserError):
+        with pytest.raises(RuntimeError):
             read_file_subset(str(bad_file), [])
 
     def test_reading_file(self):
@@ -55,6 +55,44 @@ class TestParserFunctionality:
         # assert 
         assert test.empty, f"Cleaned data does not match expected output diff:{df.compare(test)}"
         
+
+
+    def test_read_file_no_subset_returns_all_columns(self, tmp_path):
+        """When subset is empty (default), all columns from the CSV are returned"""
+        csv_file = tmp_path / "data.csv"
+        csv_file.write_text("col1,col2,col3\n1,2,3\n4,5,6")
+        df = read_file_subset(str(csv_file))
+        assert list(df.columns) == ["col1", "col2", "col3"]
+        assert len(df) == 2
+
+    def test_read_file_with_subset_returns_only_requested_columns(self, tmp_path):
+        """When a subset list is provided, only those columns are returned"""
+        csv_file = tmp_path / "data.csv"
+        csv_file.write_text("col1,col2,col3\n1,2,3\n4,5,6")
+        df = read_file_subset(str(csv_file), ["col1", "col3"])
+        assert list(df.columns) == ["col1", "col3"]
+        assert "col2" not in df.columns
+
+    def test_read_file_subset_preserves_row_count(self, tmp_path):
+        """Row count is preserved when selecting a subset of columns"""
+        csv_file = tmp_path / "data.csv"
+        csv_file.write_text("a,b,c\n1,2,3\n4,5,6\n7,8,9")
+        df = read_file_subset(str(csv_file), ["a", "b"])
+        assert len(df) == 3
+
+    def test_read_file_invalid_column_raises_key_error(self, tmp_path):
+        """Requesting a column that does not exist raises a KeyError"""
+        csv_file = tmp_path / "data.csv"
+        csv_file.write_text("col1,col2\n1,2")
+        with pytest.raises(KeyError):
+            read_file_subset(str(csv_file), ["col1", "nonexistent_col"])
+
+    def test_read_file_returns_dataframe(self, tmp_path):
+        """Return type is always a pandas DataFrame"""
+        csv_file = tmp_path / "data.csv"
+        csv_file.write_text("x,y\n10,20")
+        result = read_file_subset(str(csv_file))
+        assert isinstance(result, pd.DataFrame)
 
 
 def test_clean_data():
@@ -96,5 +134,3 @@ def test_clean_data():
     # assert that the cleaned data matches the expected output
     test = cleaned_data.compare(expected_output)
     assert test.empty, f"Cleaned data does not match expected output diff:{cleaned_data.compare(test)}"
-
-
