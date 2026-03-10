@@ -28,7 +28,6 @@ def read_file_subset(filepath, subset=[]):
         Output:
             - Dataframe with your csv read, data is NOT cleaned
 
-            TODO : change all them prints to logs when we get that set up
     """
 
     # read the file
@@ -55,11 +54,15 @@ def read_file_subset(filepath, subset=[]):
         return df[subset]
 
 
+
+
+# this is something we can't fully automate and would need code changes, this is because
+# it takes input from a human to decide what types we want to store everything in the DB
 def clean_data(df):
     """Cleans the given Dataframe
     
     -Converts numerical entries to Int/Float
-    - TODO decide if there are too many NaN entries and if we need to drop a col, or do we fill
+    - decide if there are too many NaN entries and if we need to drop a col, or do we fill
     - removes duplicate rows, strip whitespace and standardize text
     
     """
@@ -69,15 +72,18 @@ def clean_data(df):
     # avg_online_spend(float),shopping_preference(string)
     #
 
-    # TODO decide whether to drop anything here
+    # DROP things here
+
+    rejected_rows = df[df.duplicated(keep='first') | df.isnull().any(axis=1)]
 
     na_rows = df[df.isnull().any(axis=1)]
     logger.info(f"na rows: {na_rows}")
     df.dropna(inplace=True) # drop rows with any NaN values
 
-    dupe_rows = df[df.duplicated(keep=False)]
+    dupe_rows = df[df.duplicated(keep='first')]
     logger.info(f"dupe rows: {dupe_rows}")
     df.drop_duplicates(inplace=True) # drop duplicate rows
+
 
     # type conversions
     df["age"] = df["age"].astype(int)
@@ -95,7 +101,23 @@ def clean_data(df):
     # string standardizing
     df["shopping_preference"] = df["shopping_preference"].apply(lambda x : x.strip().lower())
 
-    return df
+    # type conversions
+    rejected_rows["age"] = rejected_rows["age"].astype(int)
+    rejected_rows["monthly_income"] = rejected_rows["monthly_income"].astype(float)
+    rejected_rows["daily_internet_hours"] = rejected_rows["daily_internet_hours"].astype(float)
+    rejected_rows["smartphone_usage_years"] = rejected_rows["smartphone_usage_years"].astype(float)
+    rejected_rows["social_media_hours"] = rejected_rows["social_media_hours"].astype(float)
+    rejected_rows["online_payment_trust_score"] = rejected_rows["online_payment_trust_score"].astype(float)
+    rejected_rows["tech_savvy_score"] = rejected_rows["tech_savvy_score"].astype(float)
+    rejected_rows["monthly_online_orders"] = rejected_rows["monthly_online_orders"].astype(int)
+    rejected_rows["monthly_store_visits"] = rejected_rows["monthly_store_visits"].astype(int)
+    rejected_rows["avg_online_spend"] = rejected_rows["avg_online_spend"].astype(float)
+    rejected_rows["shopping_preference"] = rejected_rows["shopping_preference"].astype(str)
+    
+    # string standardizing
+    rejected_rows["shopping_preference"] = rejected_rows["shopping_preference"].apply(lambda x : x.strip().lower())
+
+    return (df, rejected_rows)
 
 
 
@@ -107,3 +129,20 @@ def add_id_feature(df):
     df["id"] = arr
     
     return df
+
+
+# preprocessing that's specific to our dataset, this would need to be changed
+def preprocessing(df):
+    # preprocessing all the tables
+    df = add_id_feature(df)
+    shopping_mapper = {"store":0, "online":1}
+    # change to our id
+    df["shopping_prefence"] = df["shopping_preference"].apply(lambda x : shopping_mapper[x])
+
+    customers_table = df[["id","age","monthly_income"]]
+    technology_usage_table = df[["id","daily_internet_hours","smartphone_usage_years"]]
+    social_behavior_table = df[["id","social_media_hours", "online_payment_trust_score", "tech_savvy_score"]]
+    shopping_behavior_table = df[["id","monthly_online_orders", "monthly_store_vists", "average_online_spending","shopping_prefernce"]]
+    shopping_preference_table = df[["shopping_prefernce"]]
+
+    # DO STUFF LATER

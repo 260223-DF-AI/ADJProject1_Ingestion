@@ -2,6 +2,7 @@
 import pytest
 from src.parser import clean_data, read_file_subset, add_id_feature
 import pandas as pd
+import numpy as np
 
 class TestParserFunctionality:
     """Test all of the parser's edgecases"""
@@ -126,11 +127,33 @@ def test_clean_data():
         'shopping_preference': ['store', 'hybrid', 'store', 'store', 'store']
     })
 
+    expected_output2 = pd.DataFrame({
+        'age': [60,60],
+        'monthly_income': [244016.0,244016.0],
+        'daily_internet_hours': [6.0,6.0],
+        'smartphone_usage_years': [5.0,5.0],
+        'social_media_hours': [0.7,0.7],
+        'online_payment_trust_score': [2.0,2.0],
+        'tech_savvy_score': [5.0, np.nan],
+        'monthly_online_orders': [18,18],
+        'monthly_store_visits': [16, 16],
+        'avg_online_spend': [131971.0, np.nan],
+        'shopping_preference': ['store', 'store']
+    })
     #print(expected_output)
     # clean the data using the function
-    cleaned_data = clean_data(sample_data)
+    cleaned_data, rejected_rows = clean_data(sample_data)
     #print("Cleaned data:")
     #print(cleaned_data)
+
+    #test rejected rows
+    pd.set_option('display.max_columns', None)
+    #print("rej:",rejected_rows.shape, "output:", expected_output2.shape)
+    print("rej:",rejected_rows)
+    print("exp",expected_output2)
+    test2 = expected_output2.reset_index(drop=True).compare(rejected_rows.reset_index(drop=True))
+    assert test2.empty, f"Rejected data does not match expected output diff:{test2}"
+
     # assert that the cleaned data matches the expected output
     test = cleaned_data.compare(expected_output)
     assert test.empty, f"Cleaned data does not match expected output diff:{cleaned_data.compare(test)}"
@@ -156,11 +179,13 @@ def test_add_id():
         'shopping_preference': ['store', 'hybrid', 'store', 'store', 'store']
     })
 
-    cleaned_data = clean_data(sample_data)
+    cleaned_data,rejected_rows = clean_data(sample_data)
 
     # test cleaned_data works
     test = cleaned_data.compare(expected_output1)
     assert test.empty, f"Cleaned data does not match expected output diff:{cleaned_data.compare(test)}"
+
+
 
     # test adding id works
     expected_output2 = pd.DataFrame({
