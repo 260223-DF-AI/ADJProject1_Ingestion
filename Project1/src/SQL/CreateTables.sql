@@ -1,13 +1,13 @@
 CREATE DATABASE Shopping_Data;
 
 CREATE TABLE Customers (
-    customer_id PRIMARY KEY INT NOT NULL,
+    customer_id INT PRIMARY KEY,
     age INT NOT NULL,
     monthly_income FLOAT NOT NULL
 );
 
 CREATE TABLE Technology_Usage (
-    technology_usage_id PRIMARY KEY SERIAL NOT NULL,
+    technology_usage_id SERIAL PRIMARY KEY,
     customer_id INT NOT NULL,
     daily_internet_hours FLOAT NOT NULL,
     smartphone_usage_years FLOAT NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE Technology_Usage (
 );
 
 CREATE TABLE Social_Behavior (
-    social_behavior_id PRIMARY KEY SERIAL NOT NULL,
+    social_behavior_id SERIAL PRIMARY KEY,
     customer_id INT NOT NULL,
     social_media_hours FLOAT NOT NULL,
     online_payment_trust_score FLOAT NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE Social_Behavior (
 );
 
 CREATE TABLE Shopping_Behavior (
-    shopping_behavior_id PRIMARY KEY SERIAL NOT NULL,
+    shopping_behavior_id SERIAL PRIMARY KEY,
     customer_id INT NOT NULL,
     monthly_online_orders INT NOT NULL,
     monthly_store_visits INT NOT NULL,
@@ -35,12 +35,12 @@ CREATE TABLE Shopping_Behavior (
 );
 
 CREATE TABLE Shopping_Preference (
-    shopping_preference_id PRIMARY KEY SERIAL NOT NULL,
+    shopping_preference_id SERIAL PRIMARY KEY,
     preference_name VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE Invalid_Entries ( -- entries containing null values or were duplicates
-    invalid_entry_id PRIMARY KEY SERIAL NOT NULL,
+    invalid_entry_id SERIAL PRIMARY KEY,
     age INT,
     monthly_income FLOAT,
     daily_internet_hours FLOAT,

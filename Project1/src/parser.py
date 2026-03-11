@@ -135,14 +135,21 @@ def add_id_feature(df):
 def preprocessing(df):
     # preprocessing all the tables
     df = add_id_feature(df)
-    shopping_mapper = {"store":0, "online":1}
+    shopping_mapper = {"store":0, "online":1, "hybrid" : 2}
     # change to our id
-    df["shopping_prefence"] = df["shopping_preference"].apply(lambda x : shopping_mapper[x])
+    df["shopping_preference"] = df["shopping_preference"].apply(lambda x : shopping_mapper[x])
 
     customers_table = df[["id","age","monthly_income"]]
     technology_usage_table = df[["id","daily_internet_hours","smartphone_usage_years"]]
     social_behavior_table = df[["id","social_media_hours", "online_payment_trust_score", "tech_savvy_score"]]
-    shopping_behavior_table = df[["id","monthly_online_orders", "monthly_store_vists", "average_online_spending","shopping_prefernce"]]
-    shopping_preference_table = df[["shopping_prefernce"]]
+    shopping_behavior_table = df[["id","monthly_online_orders", "monthly_store_visits", "avg_online_spend","shopping_preference"]]
+    shopping_preference_table = df[["shopping_preference"]]
 
-    # DO STUFF LATER
+    return {
+        "customers": customers_table,
+        "technology_usage":technology_usage_table,
+        "social_behavior":social_behavior_table,
+        "shopping_behavior": shopping_behavior_table,
+        "shopping_preference":shopping_preference_table
+    }
+
