@@ -24,7 +24,7 @@ CREATE TABLE Social_Behavior (
 );
 
 CREATE TABLE Shopping_Behavior (
-    social_behavior_id PRIMARY KEY SERIAL NOT NULL,
+    shopping_behavior_id PRIMARY KEY SERIAL NOT NULL,
     customer_id INT NOT NULL,
     monthly_online_orders INT NOT NULL,
     monthly_store_visits INT NOT NULL,
