@@ -1,6 +1,6 @@
 """File to test parser.py functionality"""
 import pytest
-from src.parser import clean_data, read_file_subset, add_id_feature
+from src.parser import clean_data, read_file_subset, add_id_feature, preprocessing
 import pandas as pd
 import numpy as np
 
@@ -207,3 +207,17 @@ def test_add_id():
     #print(result)
     test2 = expected_output2.compare(result)
     assert test2.empty, f"new data does not match expected output diff:{cleaned_data.compare(test)}"
+
+def test_preprocessing():
+    sample_data = pd.read_csv('tests/test_subset.csv')
+    cleaned_data,_ = clean_data(sample_data)
+    tables = preprocessing(cleaned_data)
+
+    assert {"id","age","monthly_income"}.issubset(tables["customers"].columns), "Customers fail"
+
+    assert {"id","daily_internet_hours","smartphone_usage_years"}.issubset(tables["technology_usage"].columns), "technology_usage fail"
+    
+    assert {"id","social_media_hours", "online_payment_trust_score", "tech_savvy_score"}.issubset(tables["social_behavior"].columns), "social_behavior fail"
+    assert {"id","monthly_online_orders", "monthly_store_visits", "avg_online_spend","shopping_preference"}.issubset(tables["shopping_behavior"].columns), f"shopping_behavior fail got: {tables["shopping_behavior"].columns}"
+
+    assert {"shopping_preference"}.issubset(tables["shopping_preference"].columns), "shopping_preference fail"
