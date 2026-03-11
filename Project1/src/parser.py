@@ -4,6 +4,10 @@ import pandas as pd
 
 import logging
 from datetime import datetime
+from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
+import os
+
 
 logger = logging.getLogger(__name__)
 console_handler = logging.StreamHandler()
@@ -133,10 +137,11 @@ def add_id_feature(df):
 def preprocessing(df):
     # preprocessing all the tables
     df = add_id_feature(df)
-    shopping_mapper = {"store":0, "online":1, "hybrid" : 2}
+    shopping_mapper = {"store":1, "online":2, "hybrid" : 3}
     # change to our id
     df["shopping_preference"] = df["shopping_preference"].apply(lambda x : shopping_mapper[x])
 
+    # the id refers to customers.id (which is a foreign key to every other table besides customers)
     customers_table = df[["id","age","monthly_income"]]
     technology_usage_table = df[["id","daily_internet_hours","smartphone_usage_years"]]
     social_behavior_table = df[["id","social_media_hours", "online_payment_trust_score", "tech_savvy_score"]]
@@ -151,3 +156,168 @@ def preprocessing(df):
         "shopping_preference":shopping_preference_table
     }
 
+def upload_to_db():
+    print("UPLOAD TO DB START")
+    load_dotenv()
+    FILEPATH = os.getenv("FILEPATH")
+    print("FILEPATH:",FILEPATH)
+    # read the filepath
+    subset = [
+        'age', 'monthly_income', 'daily_internet_hours', 'smartphone_usage_years', 'social_media_hours', 'online_payment_trust_score',
+        'tech_savvy_score', 'monthly_online_orders', 'monthly_store_visits', 'avg_online_spend', 'shopping_preference'
+    ]
+    print("I am reading the file")
+    df = pd.DataFrame() # empty df
+    try:
+        df = read_file_subset(FILEPATH, subset)
+    except FileNotFoundError as e:
+        print(f"Error locating file: {e}")
+        logger.error("Error locating file: ",e)
+    except RuntimeError as e:
+        print(f"Runtime error: {e}")
+        logger.error("Runtime error: ",e)
+
+    if df.empty:
+        # print("ERROR df is empty")
+        logger.error("DF IS EMPTY AFTER READ")
+        return
+    # clean data
+    # print("I am cleaning the data")
+    df, rejected_rows = clean_data(df)
+
+    # preprocess the data and format it for our tables
+    # print("I am pre-processing")
+    processed_dataframes = preprocessing(df)
+
+    # make engine
+    # print("I am making engine")
+    CONNECTION_STRING = os.getenv("CONNECTION_STRING")
+    engine = create_engine(CONNECTION_STRING)
+
+    # use engine to call createtables.sql
+    with engine.connect() as con:
+        with open("./src/SQL/CreateTables.sql") as file:
+            # print("i am reading the file")
+            query = text(file.read()) # translate it to sqlalchemy text
+            con.execute(query)
+        con.commit()
+        # print("I am in the engine")
+        # insert our entries for each table
+        print("Populating Customers table...")
+        customers = processed_dataframes["customers"]
+        # use paramaterized query string (prvents sql injection)
+        sql = text("""INSERT INTO customers(customer_id, age, monthly_income) VALUES(:customer_id,:age,:monthly_income);""")
+
+        for _, entry in customers.iterrows():
+
+            # this dict stories how our sql interacts with our param query string
+            parameters = {
+                "customer_id":int(entry["id"]),
+                "age":int(entry["age"]),
+                "monthly_income":float(entry["monthly_income"])
+            }
+
+            con.execute(sql,parameters)
+            con.commit() # I think this is needed? lmk if this isn't
+
+        
+        # # this comes next after customers b/c there are other FK references to this I think   
+        print("Populating Shopping Preferance...")
+        shopping_preferance = processed_dataframes["shopping_preference"]
+        sql = text("""INSERT INTO shopping_preference(preference_name)
+        VALUES(:preference_name)""")
+        for _, entry in shopping_preferance.iterrows():
+            parameters = {
+                "preference_name": int(entry["shopping_preference"])
+            }
+            con.execute(sql, parameters)
+            con.commit()
+
+        print("Populating Technology_Usage table...")
+        technology_usage = processed_dataframes["technology_usage"]
+        technology_usage_query = text("""
+                                      INSERT INTO technology_usage(
+                                      customer_id, daily_internet_hours, smartphone_usage_years)
+                                      VALUES(
+                                      :technology_usage_id, :daily_internet_hours, :smartphone_usage_years);""")
+        
+        for _, entry in technology_usage.iterrows():
+            parameters = {
+                "technology_usage_id" : int(entry["id"]),
+                "daily_internet_hours" : float(entry["daily_internet_hours"]),
+                "smartphone_usage_years" : float(entry["smartphone_usage_years"])
+            }
+        
+            con.execute(technology_usage_query, parameters)
+            con.commit()
+        
+        print("Populating Social Behavior table...")
+        social_behavior = processed_dataframes["social_behavior"]
+        sql = text("""INSERT INTO social_behavior(customer_id, social_media_hours, online_payment_trust_score, tech_savvy_score)
+        VALUES(:customer_id, :social_media_hours,:online_payment_trust_score,:tech_savvy_score);""")
+        for _, entry in social_behavior.iterrows():
+            parameters = {
+                "customer_id" : int(entry["id"]),
+                "social_media_hours" : float(entry["social_media_hours"]),
+                "online_payment_trust_score" : float(entry["online_payment_trust_score"]),
+                "tech_savvy_score" : float(entry["tech_savvy_score"])
+            }
+            con.execute(sql, parameters)
+            con.commit()
+            
+        
+        print("Populating Shopping Behavior...")
+        shopping_behavior = processed_dataframes["shopping_behavior"]
+        sql = text("""INSERT INTO shopping_behavior(customer_id, monthly_online_orders, monthly_store_visits, avg_online_spend, shopping_preference_id)
+                       VALUES(:customer_id, :monthly_online_orders, :monthly_store_visits, :avg_online_spend, :shopping_id);""")
+        for _, entry in shopping_behavior.iterrows():
+            parameters = {
+                "customer_id": int(entry["id"]),
+                "monthly_online_orders": int(entry["monthly_online_orders"]),
+                "monthly_store_visits": int(entry["monthly_store_visits"]),
+                "avg_online_spend": float(entry["avg_online_spend"]),
+                "shopping_id": int(entry["shopping_preference"])
+            }
+            con.execute(sql, parameters)
+            con.commit()
+
+
+
+            
+        print("Populating Rejected Rows...")
+
+        # shopping_mapper = {1: "store", 2: "online", 3: "hybrid"}
+        # # change to our id
+        # rejected_rows["shopping_preference"] = rejected_rows["shopping_preference"].apply(lambda x : shopping_mapper[x])
+
+        technology_usage_query = text("""
+                                      INSERT INTO invalid_entries(
+                                      age, monthly_income, daily_internet_hours, smartphone_usage_years, social_media_hours,
+                                      online_payment_trust_score, tech_savvy_score, monthly_online_orders, monthly_store_visits,
+                                      avg_online_spend, shopping_preference)
+                                      VALUES(
+                                      :age, :monthly_income, :daily_internet_hours, :smartphone_usage_years, :social_media_hours,
+                                      :online_payment_trust_score, :tech_savvy_score, :monthly_online_orders, :monthly_store_visits,
+                                      :avg_online_spend, :shopping_preference);""")
+        
+        for _, entry in rejected_rows.iterrows():
+            parameters = {
+                "age" : int(entry["age"]),
+                "monthly_income" : float(entry["monthly_income"]),
+                "daily_internet_hours" : float(entry["daily_internet_hours"]),
+                "smartphone_usage_years" : float(entry["smartphone_usage_years"]),
+                "social_media_hours" : float(entry["social_media_hours"]),
+                "online_payment_trust_score" : float(entry["online_payment_trust_score"]),
+                "tech_savvy_score" : float(entry["tech_savvy_score"]),
+                "monthly_online_orders" : int(entry["monthly_online_orders"]),
+                "monthly_store_visits" : int(entry["monthly_store_visits"]),
+                "avg_online_spend" : float(entry["avg_online_spend"]),
+                "shopping_preference" : entry["shopping_preference"]
+            }
+        
+            con.execute(technology_usage_query, parameters)
+            con.commit()
+
+
+# if __name__ == "__main__":
+#     upload_to_db()
