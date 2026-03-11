@@ -203,6 +203,8 @@ def upload_to_db():
         con.commit()
         # print("I am in the engine")
         # insert our entries for each table
+
+    #============== INSERTING ENTRIES INTO TABLES ==============
         print("Populating Customers table...")
         customers = processed_dataframes["customers"]
         # use paramaterized query string (prvents sql injection)
@@ -224,6 +226,7 @@ def upload_to_db():
         # # this comes next after customers b/c there are other FK references to this I think   
         print("Populating Shopping Preferance...")
         shopping_preferance = processed_dataframes["shopping_preference"]
+        shopping_preferance.drop_duplicates(inplace=True) # drops duplicate shopping preferances, we only want 3 entries in this table (store, online, hybrid)
         sql = text("""INSERT INTO shopping_preference(preference_name)
         VALUES(:preference_name)""")
         for _, entry in shopping_preferance.iterrows():
