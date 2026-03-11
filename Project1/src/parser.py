@@ -123,9 +123,7 @@ def clean_data(df):
 
 def add_id_feature(df):
     "Adds a unique id to each row"
-    #print(df.shape)
     arr = list(range(df.shape[0]))
-    #print(arr)
     df["id"] = arr
     
     return df

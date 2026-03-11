@@ -102,8 +102,6 @@ def test_clean_data():
     
     # get sample data from test_subset.csv
     sample_data = pd.read_csv('tests/test_subset.csv')
-    #print("Sample data before cleaning:")
-    #print(sample_data)
     # expected output after cleaning the data
     # expected behavior changes:
     #   - rows 6 and 7 are duplicates, so drop them
@@ -140,17 +138,11 @@ def test_clean_data():
         'avg_online_spend': [131971.0, np.nan],
         'shopping_preference': ['store', 'store']
     })
-    #print(expected_output)
     # clean the data using the function
     cleaned_data, rejected_rows = clean_data(sample_data)
-    #print("Cleaned data:")
-    #print(cleaned_data)
 
     #test rejected rows
     pd.set_option('display.max_columns', None)
-    #print("rej:",rejected_rows.shape, "output:", expected_output2.shape)
-    print("rej:",rejected_rows)
-    print("exp",expected_output2)
     test2 = expected_output2.reset_index(drop=True).compare(rejected_rows.reset_index(drop=True))
     assert test2.empty, f"Rejected data does not match expected output diff:{test2}"
 
@@ -163,7 +155,6 @@ def test_add_id():
     """tests adding id feature"""
 
     sample_data = pd.read_csv('tests/test_subset.csv')
-    #print("Sample data before cleaning:")
 
     expected_output1 = pd.DataFrame({
         'age': [56, 69, 46, 32, 60],
@@ -204,7 +195,6 @@ def test_add_id():
     })
 
     result = add_id_feature(cleaned_data)
-    #print(result)
     test2 = expected_output2.compare(result)
     assert test2.empty, f"new data does not match expected output diff:{cleaned_data.compare(test)}"
 
