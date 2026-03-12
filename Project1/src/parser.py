@@ -78,7 +78,7 @@ def clean_data(df):
 
     # DROP things here
 
-    rejected_rows = df[df.duplicated(keep='first') | df.isnull().any(axis=1)]
+    invalid_entries = df[df.duplicated(keep='first') | df.isnull().any(axis=1)]
 
     na_rows = df[df.isnull().any(axis=1)]
     logger.info(f"na rows: {na_rows}")
@@ -106,22 +106,22 @@ def clean_data(df):
     df["shopping_preference"] = df["shopping_preference"].apply(lambda x : x.strip().lower())
 
     # type conversions
-    rejected_rows["age"] = rejected_rows["age"].astype(int)
-    rejected_rows["monthly_income"] = rejected_rows["monthly_income"].astype(float)
-    rejected_rows["daily_internet_hours"] = rejected_rows["daily_internet_hours"].astype(float)
-    rejected_rows["smartphone_usage_years"] = rejected_rows["smartphone_usage_years"].astype(float)
-    rejected_rows["social_media_hours"] = rejected_rows["social_media_hours"].astype(float)
-    rejected_rows["online_payment_trust_score"] = rejected_rows["online_payment_trust_score"].astype(float)
-    rejected_rows["tech_savvy_score"] = rejected_rows["tech_savvy_score"].astype(float)
-    rejected_rows["monthly_online_orders"] = rejected_rows["monthly_online_orders"].astype(int)
-    rejected_rows["monthly_store_visits"] = rejected_rows["monthly_store_visits"].astype(int)
-    rejected_rows["avg_online_spend"] = rejected_rows["avg_online_spend"].astype(float)
-    rejected_rows["shopping_preference"] = rejected_rows["shopping_preference"].astype(str)
+    invalid_entries["age"] = invalid_entries["age"].astype(int)
+    invalid_entries["monthly_income"] = invalid_entries["monthly_income"].astype(float)
+    invalid_entries["daily_internet_hours"] = invalid_entries["daily_internet_hours"].astype(float)
+    invalid_entries["smartphone_usage_years"] = invalid_entries["smartphone_usage_years"].astype(float)
+    invalid_entries["social_media_hours"] = invalid_entries["social_media_hours"].astype(float)
+    invalid_entries["online_payment_trust_score"] = invalid_entries["online_payment_trust_score"].astype(float)
+    invalid_entries["tech_savvy_score"] = invalid_entries["tech_savvy_score"].astype(float)
+    invalid_entries["monthly_online_orders"] = invalid_entries["monthly_online_orders"].astype(int)
+    invalid_entries["monthly_store_visits"] = invalid_entries["monthly_store_visits"].astype(int)
+    invalid_entries["avg_online_spend"] = invalid_entries["avg_online_spend"].astype(float)
+    invalid_entries["shopping_preference"] = invalid_entries["shopping_preference"].astype(str)
     
     # string standardizing
-    rejected_rows["shopping_preference"] = rejected_rows["shopping_preference"].apply(lambda x : x.strip().lower())
+    invalid_entries["shopping_preference"] = invalid_entries["shopping_preference"].apply(lambda x : x.strip().lower())
 
-    return (df, rejected_rows)
+    return (df, invalid_entries)
 
 
 
@@ -183,7 +183,7 @@ def upload_to_db():
         return
     # clean data
     # print("I am cleaning the data")
-    df, rejected_rows = clean_data(df)
+    df, invalid_entries = clean_data(df)
 
     # preprocess the data and format it for our tables
     # print("I am pre-processing")
@@ -208,7 +208,7 @@ def upload_to_db():
         print("Populating Customers table...")
         customers = processed_dataframes["customers"]
         # use paramaterized query string (prvents sql injection)
-        sql = text("""INSERT INTO customers(customer_id, age, monthly_income) VALUES(:customer_id,:age,:monthly_income);""")
+        customers_query = text("""INSERT INTO customers(customer_id, age, monthly_income) VALUES(:customer_id,:age,:monthly_income);""")
 
         for _, entry in customers.iterrows():
 
@@ -219,7 +219,7 @@ def upload_to_db():
                 "monthly_income":float(entry["monthly_income"])
             }
 
-            con.execute(sql,parameters)
+            con.execute(customers_query,parameters)
             con.commit() # I think this is needed? lmk if this isn't
 
         
@@ -256,7 +256,7 @@ def upload_to_db():
         
         print("Populating Social Behavior table...")
         social_behavior = processed_dataframes["social_behavior"]
-        sql = text("""INSERT INTO social_behavior(customer_id, social_media_hours, online_payment_trust_score, tech_savvy_score)
+        social_behavior_query = text("""INSERT INTO social_behavior(customer_id, social_media_hours, online_payment_trust_score, tech_savvy_score)
         VALUES(:customer_id, :social_media_hours,:online_payment_trust_score,:tech_savvy_score);""")
         for _, entry in social_behavior.iterrows():
             parameters = {
@@ -265,13 +265,13 @@ def upload_to_db():
                 "online_payment_trust_score" : float(entry["online_payment_trust_score"]),
                 "tech_savvy_score" : float(entry["tech_savvy_score"])
             }
-            con.execute(sql, parameters)
+            con.execute(social_behavior_query, parameters)
             con.commit()
             
         
         print("Populating Shopping Behavior...")
         shopping_behavior = processed_dataframes["shopping_behavior"]
-        sql = text("""INSERT INTO shopping_behavior(customer_id, monthly_online_orders, monthly_store_visits, avg_online_spend, shopping_preference_id)
+        shopping_behavior_query = text("""INSERT INTO shopping_behavior(customer_id, monthly_online_orders, monthly_store_visits, avg_online_spend, shopping_preference_id)
                        VALUES(:customer_id, :monthly_online_orders, :monthly_store_visits, :avg_online_spend, :shopping_id);""")
         for _, entry in shopping_behavior.iterrows():
             parameters = {
@@ -281,19 +281,12 @@ def upload_to_db():
                 "avg_online_spend": float(entry["avg_online_spend"]),
                 "shopping_id": int(entry["shopping_preference"])
             }
-            con.execute(sql, parameters)
+            con.execute(shopping_behavior_query, parameters)
             con.commit()
 
 
-
-            
-        print("Populating Rejected Rows...")
-
-        # shopping_mapper = {1: "store", 2: "online", 3: "hybrid"}
-        # # change to our id
-        # rejected_rows["shopping_preference"] = rejected_rows["shopping_preference"].apply(lambda x : shopping_mapper[x])
-
-        technology_usage_query = text("""
+        print("Populating Invalid Entries...")
+        invalid_entries_query = text("""
                                       INSERT INTO invalid_entries(
                                       age, monthly_income, daily_internet_hours, smartphone_usage_years, social_media_hours,
                                       online_payment_trust_score, tech_savvy_score, monthly_online_orders, monthly_store_visits,
@@ -303,7 +296,7 @@ def upload_to_db():
                                       :online_payment_trust_score, :tech_savvy_score, :monthly_online_orders, :monthly_store_visits,
                                       :avg_online_spend, :shopping_preference);""")
         
-        for _, entry in rejected_rows.iterrows():
+        for _, entry in invalid_entries.iterrows():
             parameters = {
                 "age" : int(entry["age"]),
                 "monthly_income" : float(entry["monthly_income"]),
@@ -318,8 +311,9 @@ def upload_to_db():
                 "shopping_preference" : entry["shopping_preference"]
             }
         
-            con.execute(technology_usage_query, parameters)
+            con.execute(invalid_entries_query, parameters)
             con.commit()
+    print("SUCCESSFULLY INSERTED INTO TABLES")
 
 
 # if __name__ == "__main__":
