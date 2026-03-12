@@ -313,7 +313,7 @@ def upload_to_db():
         
             con.execute(invalid_entries_query, parameters)
         con.commit()
-
+    print("SUCCESSFULLY LOADED DATA INTO TABLES")
 
 # if __name__ == "__main__":
 #     upload_to_db()
