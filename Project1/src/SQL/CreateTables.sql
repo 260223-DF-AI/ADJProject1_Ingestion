@@ -40,7 +40,7 @@ CREATE TABLE Social_Behavior (
 -- creating Shopping_Preference table
 -- PK: shopping_preference_id
 CREATE TABLE Shopping_Preference (
-    shopping_preference_id SERIAL PRIMARY KEY,
+    shopping_preference_id INT PRIMARY KEY,
     preference_name VARCHAR(50) NOT NULL
 );
 

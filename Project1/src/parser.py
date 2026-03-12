@@ -7,6 +7,7 @@ from datetime import datetime
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 import os
+import numpy as np
 
 
 logger = logging.getLogger(__name__)
@@ -77,9 +78,9 @@ def clean_data(df):
     #
 
     # DROP things here
-
+    print(df.tail())
+    df = df.replace("", np.nan)
     invalid_entries = df[df.duplicated(keep='first') | df.isnull().any(axis=1)]
-
     na_rows = df[df.isnull().any(axis=1)]
     logger.info(f"na rows: {na_rows}")
     df.dropna(inplace=True) # drop rows with any NaN values
@@ -184,6 +185,7 @@ def upload_to_db():
     # clean data
     # print("I am cleaning the data")
     df, invalid_entries = clean_data(df)
+    print(f"\n\ninvalid_entries: {invalid_entries}\n\n")
 
     # preprocess the data and format it for our tables
     # print("I am pre-processing")
@@ -226,12 +228,14 @@ def upload_to_db():
         # # this comes next after customers b/c there are other FK references to this I think   
         print("Populating Shopping Preferance...")
         shopping_preferance = processed_dataframes["shopping_preference"]
+        shopping_mapper2 = {1: "store", 2: "hybrid", 3: "online"}
         shopping_preferance.drop_duplicates(inplace=True) # drops duplicate shopping preferances, we only want 3 entries in this table (store, online, hybrid)
-        sql = text("""INSERT INTO shopping_preference(preference_name)
-        VALUES(:preference_name)""")
+        sql = text("""INSERT INTO shopping_preference(shopping_preference_id, preference_name)
+        VALUES(:id, :preference_name)""")
         for _, entry in shopping_preferance.iterrows():
             parameters = {
-                "preference_name": int(entry["shopping_preference"])
+                "id": int(entry["shopping_preference"]),
+                "preference_name": shopping_mapper2[int(entry["shopping_preference"])]
             }
             con.execute(sql, parameters)
         con.commit()
@@ -297,32 +301,19 @@ def upload_to_db():
                                       :avg_online_spend, :shopping_preference);""")
         
         # change the types here while preserving none (sql alchemy likes None for nullables)
-        invalid_entries.fillna(None)
-        invalid_entries = invalid_entries.astype({
-            'age': 'Int64',
-            'monthly_income': 'Float64',
-            'daily_internet_hours': 'Float64',
-            'smartphone_usage_years': 'Float64',
-            'social_media_hours': 'Float64',
-            'online_payment_trust_score': 'Float64',
-            'tech_savvy_score': 'Float64',
-            'monthly_online_orders': 'Int64',
-            'monthly_store_visits': 'Int64',
-            'avg_online_spend': 'Float64'
-        })
         for _, entry in invalid_entries.iterrows():
-            
+            logger.debug(f"Invalid entry found: {entry}")
             parameters = {
-                "age" : entry["age"],
-                "monthly_income" : entry["monthly_income"],
-                "daily_internet_hours" : entry["daily_internet_hours"],
-                "smartphone_usage_years" : entry["smartphone_usage_years"],
-                "social_media_hours" : entry["social_media_hours"],
-                "online_payment_trust_score" : entry["online_payment_trust_score"],
-                "tech_savvy_score" : entry["tech_savvy_score"],
-                "monthly_online_orders" : entry["monthly_online_orders"],
-                "monthly_store_visits" : entry["monthly_store_visits"],
-                "avg_online_spend" : entry["avg_online_spend"],
+                "age" : int(entry["age"]),
+                "monthly_income" : float(entry["monthly_income"]),
+                "daily_internet_hours" : float(entry["daily_internet_hours"]),
+                "smartphone_usage_years" : float(entry["smartphone_usage_years"]),
+                "social_media_hours" : float(entry["social_media_hours"]),
+                "online_payment_trust_score" : float(entry["online_payment_trust_score"]),
+                "tech_savvy_score" : float(entry["tech_savvy_score"]),
+                "monthly_online_orders" : int(entry["monthly_online_orders"]),
+                "monthly_store_visits" : int(entry["monthly_store_visits"]),
+                "avg_online_spend" : float(entry["avg_online_spend"]),
                 "shopping_preference" : entry["shopping_preference"]
             }
         
