@@ -220,7 +220,7 @@ def upload_to_db():
             }
 
             con.execute(customers_query,parameters)
-            con.commit() # I think this is needed? lmk if this isn't
+        con.commit() # commit changes to table
 
         
         # # this comes next after customers b/c there are other FK references to this I think   
@@ -234,7 +234,7 @@ def upload_to_db():
                 "preference_name": int(entry["shopping_preference"])
             }
             con.execute(sql, parameters)
-            con.commit()
+        con.commit()
 
         print("Populating Technology_Usage table...")
         technology_usage = processed_dataframes["technology_usage"]
@@ -252,7 +252,7 @@ def upload_to_db():
             }
         
             con.execute(technology_usage_query, parameters)
-            con.commit()
+        con.commit()
         
         print("Populating Social Behavior table...")
         social_behavior = processed_dataframes["social_behavior"]
@@ -266,7 +266,7 @@ def upload_to_db():
                 "tech_savvy_score" : float(entry["tech_savvy_score"])
             }
             con.execute(social_behavior_query, parameters)
-            con.commit()
+        con.commit()
             
         
         print("Populating Shopping Behavior...")
@@ -282,7 +282,7 @@ def upload_to_db():
                 "shopping_id": int(entry["shopping_preference"])
             }
             con.execute(shopping_behavior_query, parameters)
-            con.commit()
+        con.commit()
 
 
         print("Populating Invalid Entries...")
@@ -312,8 +312,7 @@ def upload_to_db():
             }
         
             con.execute(invalid_entries_query, parameters)
-            con.commit()
-    print("SUCCESSFULLY INSERTED INTO TABLES")
+        con.commit()
 
 
 # if __name__ == "__main__":
