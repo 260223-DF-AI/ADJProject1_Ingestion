@@ -1,6 +1,6 @@
 """File to test parser.py functionality"""
 import pytest
-from src.parser import clean_data, read_file_subset, add_id_feature, preprocessing
+from src.parser import clean_data, read_file_subset, add_id_feature, preprocessing, upload_to_db
 import pandas as pd
 import numpy as np
 
@@ -278,3 +278,7 @@ def test_preprocessing():
     assert {"id","monthly_online_orders", "monthly_store_visits", "avg_online_spend","shopping_preference"}.issubset(tables["shopping_behavior"].columns), f"shopping_behavior fail got: {tables["shopping_behavior"].columns}"
 
     assert {"shopping_preference"}.issubset(tables["shopping_preference"].columns), "shopping_preference fail"
+
+
+def test_upload_to_db():
+    assert upload_to_db() == 0

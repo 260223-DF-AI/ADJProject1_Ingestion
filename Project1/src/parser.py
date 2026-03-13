@@ -102,7 +102,7 @@ def clean_data(df):
     df["monthly_store_visits"] = df["monthly_store_visits"].astype(int)
     df["avg_online_spend"] = df["avg_online_spend"].astype(float)
     df["shopping_preference"] = df["shopping_preference"].astype(str)
-    
+
     # string standardizing
     df["shopping_preference"] = df["shopping_preference"].apply(lambda x : x.strip().lower())
 
@@ -320,6 +320,7 @@ def upload_to_db():
             con.execute(invalid_entries_query, parameters)
         con.commit()
     print("SUCCESSFULLY LOADED DATA INTO TABLES")
+    return 0
 
 # if __name__ == "__main__":
 #     upload_to_db()
