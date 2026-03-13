@@ -78,7 +78,7 @@ def clean_data(df):
     #
 
     # DROP things here
-    print(df.tail())
+    #print(df.tail())
     df = df.replace("", np.nan)
     invalid_entries = df[df.duplicated(keep='first') | df.isnull().any(axis=1)]
     na_rows = df[df.isnull().any(axis=1)]
