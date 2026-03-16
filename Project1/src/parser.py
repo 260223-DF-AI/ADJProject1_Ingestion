@@ -161,13 +161,14 @@ def upload_to_db():
     print("UPLOAD TO DB START")
     load_dotenv()
     FILEPATH = os.getenv("FILEPATH")
-    print("FILEPATH:",FILEPATH)
+    # print("FILEPATH:",FILEPATH)
     # read the filepath
     subset = [
         'age', 'monthly_income', 'daily_internet_hours', 'smartphone_usage_years', 'social_media_hours', 'online_payment_trust_score',
         'tech_savvy_score', 'monthly_online_orders', 'monthly_store_visits', 'avg_online_spend', 'shopping_preference'
     ]
-    print("I am reading the file")
+    # print("I am reading the file")
+    logger.info("I am reading the file")
     df = pd.DataFrame() # empty df
     try:
         df = read_file_subset(FILEPATH, subset)
@@ -185,7 +186,7 @@ def upload_to_db():
     # clean data
     # print("I am cleaning the data")
     df, invalid_entries = clean_data(df)
-    print(f"\n\ninvalid_entries: {invalid_entries}\n\n")
+    # print(f"\n\ninvalid_entries: {invalid_entries}\n\n")
 
     # preprocess the data and format it for our tables
     # print("I am pre-processing")
@@ -207,7 +208,8 @@ def upload_to_db():
         # insert our entries for each table
 
     #============== INSERTING ENTRIES INTO TABLES ==============
-        print("Populating Customers table...")
+        # print("Populating Customers table...")
+        logger.info("Populating Customers table...")
         customers = processed_dataframes["customers"]
         # use paramaterized query string (prvents sql injection)
         customers_query = text("""INSERT INTO customers(customer_id, age, monthly_income) VALUES(:customer_id,:age,:monthly_income);""")
@@ -226,7 +228,8 @@ def upload_to_db():
 
         
         # # this comes next after customers b/c there are other FK references to this I think   
-        print("Populating Shopping Preferance...")
+        # print("Populating Shopping Preference...")
+        logger.info("Populating Shopping Preference...")
         shopping_preferance = processed_dataframes["shopping_preference"]
         shopping_mapper2 = {1: "store", 2: "hybrid", 3: "online"}
         shopping_preferance.drop_duplicates(inplace=True) # drops duplicate shopping preferances, we only want 3 entries in this table (store, online, hybrid)
@@ -240,7 +243,8 @@ def upload_to_db():
             con.execute(sql, parameters)
         con.commit()
 
-        print("Populating Technology_Usage table...")
+        # print("Populating Technology_Usage table...")
+        logger.info("Populating Technology_Usage table...")
         technology_usage = processed_dataframes["technology_usage"]
         technology_usage_query = text("""
                                       INSERT INTO technology_usage(
@@ -258,7 +262,8 @@ def upload_to_db():
             con.execute(technology_usage_query, parameters)
         con.commit()
         
-        print("Populating Social Behavior table...")
+        # print("Populating Social Behavior table...")
+        logger.info("Populating Social Behavior table...")
         social_behavior = processed_dataframes["social_behavior"]
         social_behavior_query = text("""INSERT INTO social_behavior(customer_id, social_media_hours, online_payment_trust_score, tech_savvy_score)
         VALUES(:customer_id, :social_media_hours,:online_payment_trust_score,:tech_savvy_score);""")
@@ -273,7 +278,8 @@ def upload_to_db():
         con.commit()
             
         
-        print("Populating Shopping Behavior...")
+        # print("Populating Shopping Behavior...")
+        logger.info("Populating Shopping Behavior")
         shopping_behavior = processed_dataframes["shopping_behavior"]
         shopping_behavior_query = text("""INSERT INTO shopping_behavior(customer_id, monthly_online_orders, monthly_store_visits, avg_online_spend, shopping_preference_id)
                        VALUES(:customer_id, :monthly_online_orders, :monthly_store_visits, :avg_online_spend, :shopping_id);""")
@@ -289,7 +295,8 @@ def upload_to_db():
         con.commit()
 
 
-        print("Populating Invalid Entries...")
+        # print("Populating Invalid Entries...")
+        logger.info("Populating Invalid Entries...")
         invalid_entries_query = text("""
                                       INSERT INTO invalid_entries(
                                       age, monthly_income, daily_internet_hours, smartphone_usage_years, social_media_hours,
@@ -319,7 +326,8 @@ def upload_to_db():
         
             con.execute(invalid_entries_query, parameters)
         con.commit()
-    print("SUCCESSFULLY LOADED DATA INTO TABLES")
+    # print("SUCCESSFULLY LOADED DATA INTO TABLES")
+    logger.info("SUCCESSFULLY LOADED DATA INTO TABLES")
     return 0
 
 # if __name__ == "__main__":
